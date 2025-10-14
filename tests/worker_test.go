@@ -33,7 +33,9 @@ func TestWorkerClient_RegisterWorker(t *testing.T) {
 				ExpiresIn:    3600,
 			},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -78,7 +80,9 @@ func TestWorkerClient_CreateWorker(t *testing.T) {
 			Success: true,
 			Data:    models.Worker{ID: "new-worker-id", Name: "test-worker"},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 

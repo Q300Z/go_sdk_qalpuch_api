@@ -23,7 +23,9 @@ func TestUserClient_GetUsers(t *testing.T) {
 			Success: true,
 			Data:    []models.User{{ID: 1, Name: "User 1"}, {ID: 2, Name: "User 2"}},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -52,7 +54,9 @@ func TestUserClient_GetUser(t *testing.T) {
 			Success: true,
 			Data:    models.User{ID: 1, Name: "User 1"},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -84,7 +88,9 @@ func TestUserClient_UpdateUser(t *testing.T) {
 			Success: true,
 			Data:    models.User{ID: 1, Name: "Updated User"},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -131,7 +137,9 @@ func TestUserClient_CreateUser(t *testing.T) {
 			t.Errorf("Expected POST request, got %s", r.Method)
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": true, "data": {"id": 1, "name": "new user"}}`))
+		if _, err := w.Write([]byte(`{"success": true, "data": {"id": 1, "name": "new user"}}`)); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -158,7 +166,9 @@ func TestUserClient_SearchUsers(t *testing.T) {
 			t.Errorf("Expected query param q=test, got %s", r.URL.Query().Get("q"))
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": true, "data": []}`))
+		if _, err := w.Write([]byte(`{"success": true, "data": []}`)); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 

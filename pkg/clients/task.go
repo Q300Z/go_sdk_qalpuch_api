@@ -19,13 +19,15 @@ var validate *validator.Validate
 
 func init() {
 	validate = validator.New()
-	validate.RegisterValidation("regexp", func(fl validator.FieldLevel) bool {
+	if err := validate.RegisterValidation("regexp", func(fl validator.FieldLevel) bool {
 		if fl.Field().String() == "" {
 			return true // omitempty handled by other tags
 		}
 		_, err := regexp.MatchString(fl.Param(), fl.Field().String())
 		return err == nil
-	})
+	}); err != nil {
+		panic(err)
+	}
 }
 
 // TaskClient handles task-related API requests.

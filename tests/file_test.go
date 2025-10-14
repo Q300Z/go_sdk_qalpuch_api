@@ -27,7 +27,9 @@ func TestFileClient_UploadFile(t *testing.T) {
 			Success: true,
 			Data:    models.File{ID: "new-file-id", Filename: "test.txt"},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -53,7 +55,9 @@ func TestFileClient_GetFileMetadata(t *testing.T) {
 			Success: true,
 			Data:    models.File{ID: "test-cuid"},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -76,7 +80,9 @@ func TestFileClient_DownloadFile(t *testing.T) {
 			t.Errorf("Expected to request '/v1/files/test-cuid/download', got %s", r.URL.Path)
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fileContent))
+		if _, err := w.Write([]byte(fileContent)); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -105,7 +111,9 @@ func TestFileClient_ListUserFiles(t *testing.T) {
 			Success: true,
 			Data:    []models.File{{ID: "file1"}, {ID: "file2"}},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -152,7 +160,9 @@ func TestFileClient_RenameFile(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": true, "data": {"id": "test-cuid", "filename": "new-name.txt"}}`))
+		if _, err := w.Write([]byte(`{"success": true, "data": {"id": "test-cuid", "filename": "new-name.txt"}}`)); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 

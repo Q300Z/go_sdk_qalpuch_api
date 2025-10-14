@@ -25,7 +25,9 @@ func TestTaskClient_GetUserTasks(t *testing.T) {
 			Success: true,
 			Data:    []models.Task{{ID: "task1"}, {ID: "task2"}},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -57,7 +59,9 @@ func TestTaskClient_CreateTask(t *testing.T) {
 			Success: true,
 			Data:    models.Task{ID: "new-task-id"},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -107,7 +111,9 @@ func TestTaskClient_GetPendingTask(t *testing.T) {
 			Success: true,
 			Data:    models.Task{ID: "pending-task-id"},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -206,7 +212,9 @@ func TestTaskClient_BuildAndExecute(t *testing.T) {
 			Success: true,
 			Data:    models.Task{ID: "new-builder-task"},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 

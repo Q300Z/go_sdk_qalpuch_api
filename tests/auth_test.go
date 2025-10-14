@@ -30,7 +30,9 @@ func TestAuthClient_Login(t *testing.T) {
 				RefreshToken: "fake_refresh_token",
 			},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -69,7 +71,9 @@ func TestAuthClient_Register(t *testing.T) {
 			Message: "User registered successfully",
 			Data:    models.User{ID: 1, Name: "testuser"},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -177,7 +181,9 @@ func TestAuthClient_RefreshToken(t *testing.T) {
 				ExpiresIn:    3600,
 			},
 		}
-		json.NewEncoder(w).Encode(response)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
