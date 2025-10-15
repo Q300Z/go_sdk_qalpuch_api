@@ -38,7 +38,7 @@ type TaskService interface {
 	DeleteTask(ctx context.Context, cuid string) error
 	GetPendingTask(ctx context.Context) (*models.Task, error)
 	UpdateTaskStatus(ctx context.Context, cuid string, req models.UpdateTaskStatusRequest) error
-	UploadTaskResult(ctx context.Context, cuid string, file []byte) error
+	UploadTaskResult(ctx context.Context, cuid string, filename string, file []byte) error
 	Build(fileID string) TaskBuilder
 }
 

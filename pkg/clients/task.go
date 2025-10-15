@@ -198,11 +198,11 @@ func (c *TaskClient) UpdateTaskStatus(ctx context.Context, cuid string, req mode
 }
 
 // UploadTaskResult allows a worker to upload the result of a completed task.
-func (c *TaskClient) UploadTaskResult(ctx context.Context, cuid string, file []byte) error {
+func (c *TaskClient) UploadTaskResult(ctx context.Context, cuid string, filename string, file []byte) error {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	part, err := writer.CreateFormFile("file", "result.txt") // Assuming a generic filename for the result
+	part, err := writer.CreateFormFile("file", filename)
 	if err != nil {
 		return err
 	}
