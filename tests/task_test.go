@@ -167,7 +167,7 @@ func TestTaskClient_UploadTaskResult(t *testing.T) {
 
 	resultContent := []byte("task result content")
 
-	err := c.Tasks.UploadTaskResult(context.Background(), "clv9p8qjk000108l9e7g3f2a1", resultContent)
+	err := c.Tasks.UploadTaskResult(context.Background(), "clv9p8qjk000108l9e7g3f2a1", "result.out", resultContent)
 	if err != nil {
 		t.Fatalf("UploadTaskResult failed: %v", err)
 	}
