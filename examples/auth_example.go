@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"go_sdk_qalpuch_api/pkg/clients"
-	"go_sdk_qalpuch_api/pkg/models"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/clients"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 	"log"
 )
 

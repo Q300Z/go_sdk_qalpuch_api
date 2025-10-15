@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go_sdk_qalpuch_api/pkg/errors"
-	"go_sdk_qalpuch_api/pkg/models"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/errors"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 	"net/http"
 )
 

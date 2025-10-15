@@ -2,8 +2,8 @@ package clients
 
 import (
 	"context"
-	"go_sdk_qalpuch_api/pkg/models"
-	"go_sdk_qalpuch_api/pkg/services"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/services"
 )
 
 // TaskBuilder provides a fluent interface for constructing and executing tasks.

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"go_sdk_qalpuch_api/pkg/services"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/services"
 )
 
 const (

@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"go_sdk_qalpuch_api/pkg/models"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 )
 
 type AuthService interface {
