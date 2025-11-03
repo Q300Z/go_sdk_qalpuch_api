@@ -2,6 +2,22 @@ package models
 
 import "time"
 
+type WorkerStatus string
+
+const (
+	WorkerStatusOnline  WorkerStatus = "online"
+	WorkerStatusOffline WorkerStatus = "offline"
+	WorkerStatusBusy    WorkerStatus = "busy"
+)
+
+type WorkerType string
+
+const (
+	WorkerTypeVideo WorkerType = "video"
+	WorkerTypeAudio WorkerType = "audio"
+	WorkerTypeImage WorkerType = "image"
+)
+
 type Worker struct {
 	ID           string       `json:"id"`
 	Name         string       `json:"name"`
