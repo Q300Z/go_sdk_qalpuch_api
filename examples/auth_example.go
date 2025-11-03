@@ -3,66 +3,73 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/clients"
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
-	"log"
 )
 
 func main() {
-	// Initialize the API client
-	baseURL := "http://localhost:8080"           // Replace with your API base URL
-	client := clients.NewUserClient(baseURL, "") // No token initially for login/register
+	baseURL := "http://localhost:8080/v1" // Replace with your API base URL
 
-	// --- User Registration Example ---
-	fmt.Println("\n--- User Registration ---")
+	// Create a new API client
+	client := clients.NewClient(baseURL, "") // No token initially
+
+	// 1. Register a new user
 	registerReq := models.RegisterRequest{
 		Username: "testuser",
 		Email:    "test@example.com",
 		Password: "password123",
 	}
-
 	registerResp, err := client.Auth.Register(context.Background(), registerReq)
 	if err != nil {
-		log.Printf("User registration failed: %v", err)
-	} else {
-		fmt.Printf("User registered successfully: %s (ID: %d)\n", registerResp.Data.Name, registerResp.Data.ID)
+		log.Fatalf("Failed to register user: %v", err)
 	}
+	fmt.Printf("User registered: %+v\n", registerResp.Data.User)
+	fmt.Printf("Received token on registration: %s\n", registerResp.Data.Token)
 
-	// --- User Login Example ---
-	fmt.Println("\n--- User Login ---")
+	// Use the token from registration for subsequent requests
+	client.Token = registerResp.Data.Token
+
+	// 2. Login with the new user (optional, as we already have a token)
 	loginReq := models.LoginRequest{
 		Email:    "test@example.com",
 		Password: "password123",
 	}
-
 	loginResp, err := client.Auth.Login(context.Background(), loginReq)
 	if err != nil {
-		log.Fatalf("User login failed: %v", err)
+		log.Fatalf("Failed to login: %v", err)
 	}
+	fmt.Printf("Login successful. Token: %s\n", loginResp.Data.Token)
 
-	fmt.Printf("User logged in successfully. Token: %s\n", loginResp.Data.Token)
-
-	// Update the client with the new token for authenticated requests
+	// Set the obtained token for subsequent requests
 	client.Token = loginResp.Data.Token
 
-	// --- Get Users Example (requires admin role, assuming 'testuser' is not admin) ---
-	fmt.Println("\n--- Get Users (expecting error if not admin) ---")
+	// 3. Get all users (requires admin role, assuming testuser is admin or API allows it)
 	users, err := client.Users.GetUsers(context.Background())
 	if err != nil {
-		log.Printf("Failed to get users: %v", err)
-	} else {
-		fmt.Println("Users:")
-		for _, user := range users {
-			fmt.Printf("- ID: %d, Name: %s, Email: %s, Role: %s\n", user.ID, user.Name, user.Email, user.Role)
-		}
+		log.Fatalf("Failed to get users: %v", err)
 	}
+	fmt.Printf("Users: %+v\n", users)
 
-	// --- Logout Example ---
-	fmt.Println("\n--- User Logout ---")
-	err = client.Auth.Logout(context.Background(), models.LogoutRequest{RefreshToken: "your_refresh_token"})
-	if err != nil {
-		log.Printf("User logout failed: %v", err)
-	} else {
-		fmt.Println("User logged out successfully.")
+	// 4. Change password
+	changePasswordReq := models.ChangePasswordRequest{
+		OldPassword: "password123",
+		NewPassword: "newpassword123",
 	}
+	err = client.Auth.ChangePassword(context.Background(), changePasswordReq)
+	if err != nil {
+		log.Fatalf("Failed to change password: %v", err)
+	}
+	fmt.Println("Password changed successfully.")
+
+	// 5. Logout
+	logoutReq := models.LogoutRequest{
+		RefreshToken: loginResp.Data.RefreshToken, // Assuming refresh token is returned on login
+	}
+	err = client.Auth.Logout(context.Background(), logoutReq)
+	if err != nil {
+		log.Fatalf("Failed to logout: %v", err)
+	}
+	fmt.Println("Logged out successfully.")
 }

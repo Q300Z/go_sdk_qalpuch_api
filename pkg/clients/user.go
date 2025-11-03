@@ -1,234 +1,89 @@
 package clients
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/errors"
+
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
-	"net/http"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/services"
 )
 
-// UserClient handles user-related API requests.
+// UserClient implements services.UserService.
 type UserClient struct {
 	client *Client
 }
 
-// GetUsers retrieves a list of all users.
+// NewUserClient creates a new UserClient.
+func NewUserClient(client *Client) services.UserService {
+	return &UserClient{client: client}
+}
+
+// GetUsers retrieves all users.
 func (c *UserClient) GetUsers(ctx context.Context) ([]models.User, error) {
-	url := fmt.Sprintf("%s/v1/users", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	var resp struct {
+		Data []models.User `json:"data"`
+	}
+	err := c.client.Get(ctx, "/users", &resp)
 	if err != nil {
 		return nil, err
 	}
-
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var usersResp struct {
-		Success bool          `json:"success"`
-		Message string        `json:"message"`
-		Data    []models.User `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&usersResp); err != nil {
-		return nil, err
-	}
-
-	return usersResp.Data, nil
+	return resp.Data, nil
 }
 
-// GetUser retrieves a single user by ID.
+// GetUser retrieves a user by ID.
 func (c *UserClient) GetUser(ctx context.Context, id int) (*models.User, error) {
-	url := fmt.Sprintf("%s/v1/users/%d", c.client.BaseURL, id)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	var resp struct {
+		Data models.User `json:"data"`
+	}
+	err := c.client.Get(ctx, fmt.Sprintf("/users/%d", id), &resp)
 	if err != nil {
 		return nil, err
 	}
-
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var userResp struct {
-		Success bool        `json:"success"`
-		Message string      `json:"message"`
-		Data    models.User `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&userResp); err != nil {
-		return nil, err
-	}
-
-	return &userResp.Data, nil
+	return &resp.Data, nil
 }
 
-// UpdateUser updates a user's information.
-func (c *UserClient) UpdateUser(ctx context.Context, id int, user models.User) (*models.User, error) {
-	jsonBody, err := json.Marshal(user)
+// UpdateUser updates a user.
+func (c *UserClient) UpdateUser(ctx context.Context, id int, req models.UpdateUserRequest) (*models.User, error) {
+	var resp struct {
+		Data models.User `json:"data"`
+	}
+	err := c.client.Put(ctx, fmt.Sprintf("/users/%d", id), req, &resp)
 	if err != nil {
 		return nil, err
 	}
-
-	url := fmt.Sprintf("%s/v1/users/%d", c.client.BaseURL, id)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var userResp struct {
-		Success bool        `json:"success"`
-		Message string      `json:"message"`
-		Data    models.User `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&userResp); err != nil {
-		return nil, err
-	}
-
-	return &userResp.Data, nil
+	return &resp.Data, nil
 }
 
 // DeleteUser deletes a user by ID.
 func (c *UserClient) DeleteUser(ctx context.Context, id int) error {
-	url := fmt.Sprintf("%s/v1/users/%d", c.client.BaseURL, id)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
-	if err != nil {
-		return err
-	}
-
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.NewAPIErrorFromResponse(resp)
-	}
-
-	return nil
+	return c.client.Delete(ctx, fmt.Sprintf("/users/%d", id))
 }
 
-// DeleteCurrentUser deletes the currently authenticated user.
+// DeleteCurrentUser deletes the authenticated user.
 func (c *UserClient) DeleteCurrentUser(ctx context.Context) error {
-	url := fmt.Sprintf("%s/v1/users/me", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
-	if err != nil {
-		return err
-	}
-
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.NewAPIErrorFromResponse(resp)
-	}
-
-	return nil
+	return c.client.Delete(ctx, "/users/me")
 }
 
-// CreateUser creates a new user (admin only).
+// CreateUser creates a new user.
 func (c *UserClient) CreateUser(ctx context.Context, req models.CreateUserRequest) (*models.User, error) {
-	jsonBody, err := json.Marshal(req)
+	var resp struct {
+		Data models.User `json:"data"`
+	}
+	err := c.client.Post(ctx, "/users", req, &resp)
 	if err != nil {
 		return nil, err
 	}
-
-	url := fmt.Sprintf("%s/v1/users", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var userResp struct {
-		Success bool        `json:"success"`
-		Message string      `json:"message"`
-		Data    models.User `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&userResp); err != nil {
-		return nil, err
-	}
-
-	return &userResp.Data, nil
+	return &resp.Data, nil
 }
 
-// SearchUsers searches for users by a query string (admin only).
+// SearchUsers searches for users by query.
 func (c *UserClient) SearchUsers(ctx context.Context, query string) ([]models.User, error) {
-	url := fmt.Sprintf("%s/v1/users/search?q=%s", c.client.BaseURL, query)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	var resp struct {
+		Data []models.User `json:"data"`
+	}
+	err := c.client.Get(ctx, fmt.Sprintf("/users/search?q=%s", query), &resp)
 	if err != nil {
 		return nil, err
 	}
-
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var usersResp struct {
-		Success bool          `json:"success"`
-		Message string        `json:"message"`
-		Data    []models.User `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&usersResp); err != nil {
-		return nil, err
-	}
-
-	return usersResp.Data, nil
+	return resp.Data, nil
 }

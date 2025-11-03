@@ -3,12 +3,13 @@ package tests
 import (
 	"context"
 	"encoding/json"
-	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/clients"
-	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/clients"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 )
 
 func TestFileClient_UploadFile(t *testing.T) {
@@ -33,7 +34,7 @@ func TestFileClient_UploadFile(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	fileContents := []byte("this is a test file")
 	_, err := c.Files.UploadFile(context.Background(), "test.txt", fileContents)
@@ -61,7 +62,7 @@ func TestFileClient_GetFileMetadata(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	file, err := c.Files.GetFileMetadata(context.Background(), "test-cuid")
 	if err != nil {
@@ -86,7 +87,7 @@ func TestFileClient_DownloadFile(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	data, err := c.Files.DownloadFile(context.Background(), "test-cuid")
 	if err != nil {
@@ -117,7 +118,7 @@ func TestFileClient_ListUserFiles(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	files, err := c.Files.ListUserFiles(context.Background())
 	if err != nil {
@@ -142,7 +143,7 @@ func TestFileClient_DeleteFile(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	err := c.Files.DeleteFile(context.Background(), "clvb2qabc000008l21234abcd")
 	if err != nil {
@@ -166,7 +167,7 @@ func TestFileClient_RenameFile(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	_, err := c.Files.RenameFile(context.Background(), "test-cuid", "new-name.txt")
 	if err != nil {

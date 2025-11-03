@@ -5,233 +5,116 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
+	"net/http"
+
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/errors"
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/services"
-	"github.com/go-playground/validator/v10"
-	"io"
-	"mime/multipart"
-	"net/http"
-	"regexp"
 )
 
-var validate *validator.Validate
-
-func init() {
-	validate = validator.New()
-	if err := validate.RegisterValidation("regexp", func(fl validator.FieldLevel) bool {
-		if fl.Field().String() == "" {
-			return true // omitempty handled by other tags
-		}
-		_, err := regexp.MatchString(fl.Param(), fl.Field().String())
-		return err == nil
-	}); err != nil {
-		panic(err)
-	}
-}
-
-// TaskClient handles task-related API requests.
+// TaskClient implements services.TaskService.
 type TaskClient struct {
 	client *Client
 }
 
-// Build starts the construction of a new task using a fluent builder pattern.
-func (c *TaskClient) Build(fileID string) services.TaskBuilder {
-	return &TaskBuilder{
-		client: c,
-		fileID: fileID,
-	}
+// NewTaskClient creates a new TaskClient.
+func NewTaskClient(client *Client) services.TaskService {
+	return &TaskClient{client: client}
 }
 
-// GetUserTasks retrieves a list of all tasks created by the authenticated user.
+// GetUserTasks retrieves tasks for the authenticated user.
 func (c *TaskClient) GetUserTasks(ctx context.Context) ([]models.Task, error) {
-	url := fmt.Sprintf("%s/v1/tasks", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	var resp struct {
+		Data []models.Task `json:"data"`
+	}
+	err := c.client.Get(ctx, "/tasks", &resp)
 	if err != nil {
 		return nil, err
 	}
-
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var tasksResp struct {
-		Success bool          `json:"success"`
-		Message string        `json:"message"`
-		Data    []models.Task `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&tasksResp); err != nil {
-		return nil, err
-	}
-
-	return tasksResp.Data, nil
+	return resp.Data, nil
 }
 
-// CreateTask creates a new task from an existing file.
+// CreateTask creates a new task.
 func (c *TaskClient) CreateTask(ctx context.Context, req models.CreateTaskRequest) (*models.Task, error) {
-	jsonBody, err := json.Marshal(req)
+	var resp struct {
+		Data models.Task `json:"data"`
+	}
+	err := c.client.Post(ctx, "/tasks", req, &resp)
 	if err != nil {
 		return nil, err
 	}
-
-	url := fmt.Sprintf("%s/v1/tasks", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var taskResp struct {
-		Success bool        `json:"success"`
-		Message string      `json:"message"`
-		Data    models.Task `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&taskResp); err != nil {
-		return nil, err
-	}
-
-	return &taskResp.Data, nil
+	return &resp.Data, nil
 }
 
 // DeleteTask deletes a task.
 func (c *TaskClient) DeleteTask(ctx context.Context, cuid string) error {
-	url := fmt.Sprintf("%s/v1/tasks/%s", c.client.BaseURL, cuid)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
-	if err != nil {
-		return err
-	}
-
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.NewAPIErrorFromResponse(resp)
-	}
-
-	return nil
+	return c.client.Delete(ctx, fmt.Sprintf("/tasks/%s", cuid))
 }
 
-// GetPendingTask assigns a pending task to an authenticated worker.
+// GetPendingTask retrieves a pending task for a worker.
 func (c *TaskClient) GetPendingTask(ctx context.Context) (*models.Task, error) {
-	url := fmt.Sprintf("%s/v1/tasks/pending", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	var resp struct {
+		Data models.Task `json:"data"`
+	}
+	err := c.client.Get(ctx, "/tasks/pending", &resp)
 	if err != nil {
 		return nil, err
 	}
-
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var taskResp struct {
-		Success bool        `json:"success"`
-		Message string      `json:"message"`
-		Data    models.Task `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&taskResp); err != nil {
-		return nil, err
-	}
-
-	return &taskResp.Data, nil
+	return &resp.Data, nil
 }
 
-// UpdateTaskStatus allows a worker to update the status of a task.
+// UpdateTaskStatus updates the status of a task.
 func (c *TaskClient) UpdateTaskStatus(ctx context.Context, cuid string, req models.UpdateTaskStatusRequest) error {
-	jsonBody, err := json.Marshal(req)
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("%s/v1/tasks/%s", c.client.BaseURL, cuid)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.NewAPIErrorFromResponse(resp)
-	}
-
-	return nil
+	return c.client.Patch(ctx, fmt.Sprintf("/tasks/%s", cuid), req, nil)
 }
 
-// UploadTaskResult allows a worker to upload the result of a completed task.
+// UploadTaskResult uploads the result of a task.
 func (c *TaskClient) UploadTaskResult(ctx context.Context, cuid string, filename string, file []byte) error {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
 	part, err := writer.CreateFormFile("file", filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create form file: %w", err)
+	}
+	if _, err := part.Write(file); err != nil {
+		return fmt.Errorf("failed to write file content: %w", err)
 	}
 
-	_, err = io.Copy(part, bytes.NewReader(file))
-	if err != nil {
-		return err
+	if err := writer.Close(); err != nil {
+		return fmt.Errorf("failed to close multipart writer: %w", err)
 	}
 
-	writer.Close()
-
-	url := fmt.Sprintf("%s/v1/tasks/%s/result", c.client.BaseURL, cuid)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
+	url := fmt.Sprintf("%s/tasks/%s/result", c.client.BaseURL, cuid)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	httpReq.Header.Set("Content-Type", writer.FormDataContentType())
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if c.client.Token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
+	}
 
-	resp, err := c.client.HTTPClient.Do(httpReq)
+	resp, err := c.client.HTTPClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to perform request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return errors.NewAPIErrorFromResponse(resp)
+	if resp.StatusCode >= 400 {
+		var apiErr models.APIErrorResponse
+		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
+			return fmt.Errorf("API error with status %d: %s", resp.StatusCode, resp.Status)
+		}
+		return &errors.APIError{StatusCode: resp.StatusCode, Message: apiErr.Message}
 	}
 
 	return nil
+}
+
+// Build creates a new TaskBuilder.
+func (c *TaskClient) Build(fileID string) services.TaskBuilder {
+	return NewTaskBuilder(c, fileID)
 }

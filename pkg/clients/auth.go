@@ -1,172 +1,58 @@
 package clients
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/errors"
+
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
-	"net/http"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/services"
 )
 
-// AuthClient handles authentication-related API requests.
+// AuthClient implements services.AuthService.
 type AuthClient struct {
-	client *Client
+	client *Client // This Client is the one from client.go
 }
 
-// Login authenticates a user and returns a JWT.
+// NewAuthClient creates a new AuthClient.
+func NewAuthClient(client *Client) services.AuthService {
+	return &AuthClient{client: client}
+}
+
+// Login authenticates a user.
 func (c *AuthClient) Login(ctx context.Context, req models.LoginRequest) (*models.LoginResponse, error) {
-	jsonBody, err := json.Marshal(req)
+	resp := &models.LoginResponse{}
+	err := c.client.Post(ctx, "/login", req, resp)
 	if err != nil {
 		return nil, err
 	}
-
-	url := fmt.Sprintf("%s/v1/login", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var loginResp models.LoginResponse
-	if err := json.NewDecoder(resp.Body).Decode(&loginResp); err != nil {
-		return nil, err
-	}
-
-	return &loginResp, nil
+	return resp, nil
 }
 
-// Register creates a new user account.
-func (c *AuthClient) Register(ctx context.Context, req models.RegisterRequest) (*models.RegisterResponse, error) {
-	jsonBody, err := json.Marshal(req)
+// Register registers a new user.
+func (c *AuthClient) Register(ctx context.Context, req models.RegisterRequest) (*models.LoginResponse, error) {
+	resp := &models.LoginResponse{}
+	err := c.client.Post(ctx, "/register", req, resp)
 	if err != nil {
 		return nil, err
 	}
-
-	url := fmt.Sprintf("%s/v1/register", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var registerResp models.RegisterResponse
-	if err := json.NewDecoder(resp.Body).Decode(&registerResp); err != nil {
-		return nil, err
-	}
-
-	return &registerResp, nil
+	return resp, nil
 }
 
-// Logout invalidates the user's session.
+// Logout logs out the current user.
 func (c *AuthClient) Logout(ctx context.Context, req models.LogoutRequest) error {
-	jsonBody, err := json.Marshal(req)
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("%s/v1/logout", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.NewAPIErrorFromResponse(resp)
-	}
-
-	return nil
+	return c.client.Post(ctx, "/logout", req, nil)
 }
 
-// ChangePassword allows a user to change their password.
+// ChangePassword changes the password of the authenticated user.
 func (c *AuthClient) ChangePassword(ctx context.Context, req models.ChangePasswordRequest) error {
-	jsonBody, err := json.Marshal(req)
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("%s/v1/change-password", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.client.Token))
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.NewAPIErrorFromResponse(resp)
-	}
-
-	return nil
+	return c.client.Post(ctx, "/change-password", req, nil)
 }
 
+// RefreshToken refreshes the access token using a refresh token.
 func (c *AuthClient) RefreshToken(ctx context.Context, req models.RefreshTokenRequest) (*models.RefreshResponse, error) {
-	jsonBody, err := json.Marshal(req)
+	resp := &models.RefreshResponse{}
+	err := c.client.Post(ctx, "/refresh", req, resp)
 	if err != nil {
 		return nil, err
 	}
-
-	url := fmt.Sprintf("%s/v1/refresh", c.client.BaseURL)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.client.HTTPClient.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.NewAPIErrorFromResponse(resp)
-	}
-
-	var refreshResp models.RefreshResponse
-	if err := json.NewDecoder(resp.Body).Decode(&refreshResp); err != nil {
-		return nil, err
-	}
-
-	return &refreshResp, nil
+	return resp, nil
 }

@@ -3,11 +3,12 @@ package tests
 import (
 	"context"
 	"encoding/json"
-	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/clients"
-	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/clients"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 )
 
 func TestUserClient_GetUsers(t *testing.T) {
@@ -29,7 +30,7 @@ func TestUserClient_GetUsers(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	users, err := c.Users.GetUsers(context.Background())
 	if err != nil {
@@ -60,7 +61,7 @@ func TestUserClient_GetUser(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	user, err := c.Users.GetUser(context.Background(), 1)
 	if err != nil {
@@ -94,9 +95,10 @@ func TestUserClient_UpdateUser(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
-	updateReq := models.User{Name: "Updated User"}
+	name := "Updated User"
+	updateReq := models.UpdateUserRequest{Name: &name}
 	user, err := c.Users.UpdateUser(context.Background(), 1, updateReq)
 	if err != nil {
 		t.Fatalf("UpdateUser failed: %v", err)
@@ -120,7 +122,7 @@ func TestUserClient_DeleteCurrentUser(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	err := c.Users.DeleteCurrentUser(context.Background())
 	if err != nil {
@@ -143,7 +145,7 @@ func TestUserClient_CreateUser(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	req := models.CreateUserRequest{
 		Name:  "new user",
@@ -172,7 +174,7 @@ func TestUserClient_SearchUsers(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "test_token")
+	c := clients.NewClient(server.URL+"/v1", "test_token")
 
 	_, err := c.Users.SearchUsers(context.Background(), "test")
 	if err != nil {

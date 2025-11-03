@@ -2,7 +2,26 @@ package models
 
 // TaskConfig is the base config shared by all tasks.
 type TaskConfig struct {
-	Type string `json:"type" validate:"required,oneof=video image music"`
+	Type string `json:"type" validate:"required,oneof=video image audio"`
+}
+
+// AudioConversionConfig holds the specific parameters for audio conversion.
+type AudioConversionConfig struct {
+	TaskConfig `validate:"required"`
+	Codec      string `json:"codec,omitempty"   validate:"omitempty,oneof=mp3 aac opus"`
+	Bitrate    int    `json:"bitrate,omitempty" validate:"omitempty,gt=0"` // in kbps
+}
+
+// NewAudioConfig creates a new AudioConversionConfig with the type pre-filled.
+
+func (c *AudioConversionConfig) WithCodec(codec string) *AudioConversionConfig {
+	c.Codec = codec
+	return c
+}
+
+func (c *AudioConversionConfig) WithBitrate(kbps int) *AudioConversionConfig {
+	c.Bitrate = kbps
+	return c
 }
 
 // --- Video Config ---
@@ -47,9 +66,6 @@ type ImageConversionConfig struct {
 }
 
 // NewImageConfig creates a new ImageConversionConfig with the type pre-filled.
-func NewImageConfig() *ImageConversionConfig {
-	return &ImageConversionConfig{TaskConfig: TaskConfig{Type: "image"}}
-}
 
 func (c *ImageConversionConfig) WithFormat(format string) *ImageConversionConfig {
 	c.Format = format
@@ -81,9 +97,6 @@ type MusicConversionConfig struct {
 }
 
 // NewMusicConfig creates a new MusicConversionConfig with the type pre-filled.
-func NewMusicConfig() *MusicConversionConfig {
-	return &MusicConversionConfig{TaskConfig: TaskConfig{Type: "music"}}
-}
 
 func (c *MusicConversionConfig) WithCodec(codec string) *MusicConversionConfig {
 	c.Codec = codec

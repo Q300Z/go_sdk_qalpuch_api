@@ -1,54 +1,120 @@
 package clients
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/errors"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/services"
-)
-
-const (
-	DefaultTimeout = 10 * time.Second
 )
 
 // Client manages communication with the QAlpuch API.
 type Client struct {
 	HTTPClient *http.Client
 	BaseURL    string
-	Token      string
+	Token      string // JWT token for authentication
 
-	Auth    services.AuthService
-	Users   services.UserService
-	Files   services.FileService
-	Tasks   services.TaskService
-	Workers services.WorkerService
+	Auth            services.AuthService
+	Users           services.UserService
+	Files           services.FileService
+	Tasks           services.TaskService
+	Workers         services.WorkerService
+	PredefinedTasks services.PredefinedTaskService
 }
 
 // NewClient creates a new API client.
-func NewClient(baseURL string, token string) *Client {
-	return &Client{
-		HTTPClient: &http.Client{Timeout: DefaultTimeout},
-		BaseURL:    baseURL,
-		Token:      token,
+func NewClient(baseURL, token string) *Client {
+	c := &Client{
+		BaseURL: baseURL,
+		Token:   token,
+		HTTPClient: &http.Client{
+			Timeout: time.Second * 30,
+		},
 	}
-}
 
-// NewUserClient creates a new client for user-facing operations.
-func NewUserClient(baseURL string, token string) *Client {
-	c := NewClient(baseURL, token)
-	c.Auth = &AuthClient{client: c}
-	c.Users = &UserClient{client: c}
-	c.Files = &FileClient{client: c}
-	c.Tasks = &TaskClient{client: c}
-	c.Workers = &WorkerClient{client: c}
+	// Initialize sub-clients
+	c.Auth = NewAuthClient(c)
+	c.Users = NewUserClient(c)
+	c.Files = NewFileClient(c)
+	c.Tasks = NewTaskClient(c)
+	c.Workers = NewWorkerClient(c)
+	c.PredefinedTasks = NewPredefinedTaskClient(c)
+
 	return c
 }
 
-// NewWorkerClient creates a new client for worker-specific operations.
-func NewWorkerClient(baseURL string, token string) *Client {
-	c := NewClient(baseURL, token)
-	c.Auth = &AuthClient{client: c}
-	c.Tasks = &TaskClient{client: c}
-	c.Workers = &WorkerClient{client: c}
-	return c
+// Request performs an HTTP request to the API.
+func (c *Client) Request(ctx context.Context, method, path string, reqBody, respBody interface{}) error {
+	var body io.Reader
+	if reqBody != nil {
+		reqBytes, err := json.Marshal(reqBody)
+		if err != nil {
+			return fmt.Errorf("failed to marshal request body for %s %s: %w", method, path, err)
+		}
+		body = bytes.NewBuffer(reqBytes)
+	}
+
+	url := fmt.Sprintf("%s%s", c.BaseURL, path)
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	if err != nil {
+		return fmt.Errorf("failed to create request for %s %s: %w", method, url, err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	if c.Token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	}
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to perform %s request to %s: %w", method, url, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		var apiErr models.APIErrorResponse
+		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
+			return fmt.Errorf("API error with status %d for %s %s: %s", resp.StatusCode, method, url, resp.Status)
+		}
+		return &errors.APIError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("API error for %s %s: %s", method, url, apiErr.Message)}
+	}
+
+	if respBody != nil {
+		if err := json.NewDecoder(resp.Body).Decode(respBody); err != nil {
+			return fmt.Errorf("failed to decode response body for %s %s: %w", method, url, err)
+		}
+	}
+
+	return nil
+}
+
+// Get performs a GET request.
+func (c *Client) Get(ctx context.Context, path string, respBody interface{}) error {
+	return c.Request(ctx, http.MethodGet, path, nil, respBody)
+}
+
+// Post performs a POST request.
+func (c *Client) Post(ctx context.Context, path string, reqBody, respBody interface{}) error {
+	return c.Request(ctx, http.MethodPost, path, reqBody, respBody)
+}
+
+// Put performs a PUT request.
+func (c *Client) Put(ctx context.Context, path string, reqBody, respBody interface{}) error {
+	return c.Request(ctx, http.MethodPut, path, reqBody, respBody)
+}
+
+// Patch performs a PATCH request.
+func (c *Client) Patch(ctx context.Context, path string, reqBody, respBody interface{}) error {
+	return c.Request(ctx, http.MethodPatch, path, reqBody, respBody)
+}
+
+// Delete performs a DELETE request.
+func (c *Client) Delete(ctx context.Context, path string) error {
+	return c.Request(ctx, http.MethodDelete, path, nil, nil)
 }

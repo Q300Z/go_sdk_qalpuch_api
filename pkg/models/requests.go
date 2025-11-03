@@ -1,20 +1,42 @@
 package models
 
-// CreateTaskRequest model for creating a new task
 type CreateTaskRequest struct {
-	FileID string      `json:"file_id"`
-	Config interface{} `json:"config"`
+	FileID           string      `json:"fileId"`
+	Config           interface{} `json:"config,omitempty"`
+	PredefinedTaskID *string     `json:"predefinedTaskId,omitempty"`
 }
 
-// UpdateTaskStatusRequest model for updating a task's status
-type UpdateTaskStatusRequest struct {
-	Status        TaskStatus `json:"status"`
-	StatusMessage string     `json:"status_message"`
+type RenameFileRequest struct {
+	Name string `json:"name"`
 }
 
-// CreateUserRequest model for an admin to create a new user
+type CreateWorkerRequest struct {
+	Name         string   `json:"name"`
+	Capabilities []string `json:"capabilities"`
+}
+
+type RegisterWorkerRequest struct {
+	Token string `json:"token"`
+}
+
 type CreateUserRequest struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 	Role  string `json:"role"`
+}
+
+type UpdateUserRequest struct {
+	Name  *string `json:"name,omitempty"`
+	Email *string `json:"email,omitempty"`
+	Role  *string `json:"role,omitempty"`
+}
+
+type UpdateTaskStatusRequest struct {
+	Status        TaskStatus `json:"status"`
+	StatusMessage string     `json:"message"`
+}
+
+type UpdateTaskRequest struct {
+	Status       *TaskStatus `json:"status,omitempty"`
+	ResultFileID *string     `json:"resultFileId,omitempty"`
 }

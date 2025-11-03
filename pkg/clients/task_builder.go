@@ -2,56 +2,52 @@ package clients
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/services"
 )
 
-// TaskBuilder provides a fluent interface for constructing and executing tasks.
+// TaskBuilder implements services.TaskBuilder.
 type TaskBuilder struct {
-	client  *TaskClient
-	fileID  string
-	config  interface{}
-	lastErr error
+	client *TaskClient
+	fileID string
+	config interface{}
 }
 
-// WithVideoConfig sets the configuration for a video conversion task.
+// NewTaskBuilder creates a new TaskBuilder.
+func NewTaskBuilder(client *TaskClient, fileID string) services.TaskBuilder {
+	return &TaskBuilder{client: client, fileID: fileID}
+}
+
+// WithVideoConfig sets the video conversion configuration.
 func (b *TaskBuilder) WithVideoConfig(config models.VideoConversionConfig) services.TaskBuilder {
-	if b.lastErr != nil {
-		return b
-	}
-	config.Type = "video"
 	b.config = config
 	return b
 }
 
-// WithImageConfig sets the configuration for an image conversion task.
+// WithImageConfig sets the image conversion configuration.
 func (b *TaskBuilder) WithImageConfig(config models.ImageConversionConfig) services.TaskBuilder {
-	if b.lastErr != nil {
-		return b
-	}
-	config.Type = "image"
 	b.config = config
 	return b
 }
 
-// WithMusicConfig sets the configuration for a music conversion task.
-func (b *TaskBuilder) WithMusicConfig(config models.MusicConversionConfig) services.TaskBuilder {
-	if b.lastErr != nil {
-		return b
-	}
-	config.Type = "music"
+// WithAudioConfig sets the audio conversion configuration.
+func (b *TaskBuilder) WithAudioConfig(config models.AudioConversionConfig) services.TaskBuilder {
 	b.config = config
 	return b
 }
 
-// Execute finalizes the task construction and sends it to the API for processing.
+// Execute creates the task with the configured parameters.
 func (b *TaskBuilder) Execute(ctx context.Context) (*models.Task, error) {
-	if b.lastErr != nil {
-		return nil, b.lastErr
+	if b.config == nil {
+		return nil, fmt.Errorf("task configuration is incomplete. Please call one of the With...Config methods")
 	}
+
 	req := models.CreateTaskRequest{
 		FileID: b.fileID,
 		Config: b.config,
 	}
+
 	return b.client.CreateTask(ctx, req)
 }

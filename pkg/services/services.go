@@ -2,12 +2,13 @@ package services
 
 import (
 	"context"
+
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 )
 
 type AuthService interface {
 	Login(ctx context.Context, req models.LoginRequest) (*models.LoginResponse, error)
-	Register(ctx context.Context, req models.RegisterRequest) (*models.RegisterResponse, error)
+	Register(ctx context.Context, req models.RegisterRequest) (*models.LoginResponse, error)
 	Logout(ctx context.Context, req models.LogoutRequest) error
 	ChangePassword(ctx context.Context, req models.ChangePasswordRequest) error
 	RefreshToken(ctx context.Context, req models.RefreshTokenRequest) (*models.RefreshResponse, error)
@@ -16,7 +17,7 @@ type AuthService interface {
 type UserService interface {
 	GetUsers(ctx context.Context) ([]models.User, error)
 	GetUser(ctx context.Context, id int) (*models.User, error)
-	UpdateUser(ctx context.Context, id int, user models.User) (*models.User, error)
+	UpdateUser(ctx context.Context, id int, req models.UpdateUserRequest) (*models.User, error)
 	DeleteUser(ctx context.Context, id int) error
 	DeleteCurrentUser(ctx context.Context) error
 	CreateUser(ctx context.Context, req models.CreateUserRequest) (*models.User, error)
@@ -46,7 +47,7 @@ type TaskService interface {
 type TaskBuilder interface {
 	WithVideoConfig(config models.VideoConversionConfig) TaskBuilder
 	WithImageConfig(config models.ImageConversionConfig) TaskBuilder
-	WithMusicConfig(config models.MusicConversionConfig) TaskBuilder
+	WithAudioConfig(config models.AudioConversionConfig) TaskBuilder
 	Execute(ctx context.Context) (*models.Task, error)
 }
 
@@ -57,4 +58,13 @@ type WorkerService interface {
 	DeleteWorker(ctx context.Context, cuid string) error
 	RegisterWorker(ctx context.Context, token string) (*models.AuthWorkerResponse, error)
 	RefreshAuth(ctx context.Context, refreshToken string) (*models.AuthWorkerResponse, error)
+}
+
+// PredefinedTaskService defines the interface for predefined task operations.
+type PredefinedTaskService interface {
+	CreatePredefinedTask(ctx context.Context, req models.CreatePredefinedTaskRequest) (*models.PredefinedTask, error)
+	GetPredefinedTasks(ctx context.Context) ([]models.PredefinedTask, error)
+	GetPredefinedTaskByID(ctx context.Context, id string) (*models.PredefinedTask, error)
+	UpdatePredefinedTask(ctx context.Context, id string, req models.UpdatePredefinedTaskRequest) (*models.PredefinedTask, error)
+	DeletePredefinedTask(ctx context.Context, id string) error
 }

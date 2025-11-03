@@ -3,11 +3,12 @@ package tests
 import (
 	"context"
 	"encoding/json"
-	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/clients"
-	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/clients"
+	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/models"
 )
 
 func TestWorkerClient_RegisterWorker(t *testing.T) {
@@ -23,14 +24,9 @@ func TestWorkerClient_RegisterWorker(t *testing.T) {
 		response := models.AuthWorkerResponse{
 			Success: true,
 			Message: "Worker authenticated successfully",
-			Data: struct {
-				Token        string `json:"token"`
-				RefreshToken string `json:"refreshToken"`
-				ExpiresIn    int    `json:"expiresIn"`
-			}{
+			Data: models.AuthWorkerResponseData{
 				Token:        "worker_jwt_token",
 				RefreshToken: "worker_refresh_token",
-				ExpiresIn:    3600,
 			},
 		}
 		if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -39,7 +35,7 @@ func TestWorkerClient_RegisterWorker(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewWorkerClient(server.URL, "") // No token initially for registration
+	c := clients.NewClient(server.URL+"/v1", "") // No token initially for registration
 
 	resp, err := c.Workers.RegisterWorker(context.Background(), "a1b2c3d4-e5f6-7890-1234-567890abcdef")
 	if err != nil {
@@ -86,7 +82,7 @@ func TestWorkerClient_CreateWorker(t *testing.T) {
 	}))
 	defer server.Close()
 
-	c := clients.NewUserClient(server.URL, "admin_token")
+	c := clients.NewClient(server.URL+"/v1", "admin_token")
 
 	worker, err := c.Workers.CreateWorker(context.Background(), "test-worker", []string{"video", "image"})
 	if err != nil {

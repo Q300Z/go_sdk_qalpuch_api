@@ -1,9 +1,13 @@
 package models
 
+import "time"
+
 type File struct {
-	ID       string `json:"id"`
-	Filename string `json:"filename"`
-	Path     string `json:"path"`
-	Size     int    `json:"size"`
-	MimeType string `json:"mimeType"`
+	ID        string    `json:"id"`
+	Filename  string    `json:"filename"`
+	Size      int64     `json:"size"`
+	MimeType  string    `json:"mimeType"`
+	Hash      string    `json:"hash"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
