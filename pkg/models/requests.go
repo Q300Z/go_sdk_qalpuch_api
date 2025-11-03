@@ -1,9 +1,9 @@
 package models
 
 type CreateTaskRequest struct {
-	FileID           string      `json:"fileId"`
-	Config           interface{} `json:"config,omitempty"`
-	PredefinedTaskID *string     `json:"predefinedTaskId,omitempty"`
+	FileID           string       `json:"fileId"`
+	Config           *interface{} `json:"config,omitempty"`
+	PredefinedTaskID *string      `json:"predefinedTaskId,omitempty"`
 }
 
 type RenameFileRequest struct {

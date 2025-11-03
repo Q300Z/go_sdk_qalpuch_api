@@ -21,14 +21,13 @@ func TestFileClient_UploadFile(t *testing.T) {
 			t.Errorf("Expected Content-Type multipart/form-data, got %s", r.Header.Get("Content-Type"))
 		}
 		w.WriteHeader(http.StatusOK)
-		response := struct {
-			Success bool        `json:"success"`
-			Data    models.File `json:"data"`
-		}{
+		fileData := models.File{ID: "new-file-id", Filename: "test.txt"}
+		var data interface{} = fileData
+		apiResponse := models.APIResponse{
 			Success: true,
-			Data:    models.File{ID: "new-file-id", Filename: "test.txt"},
+			Data:    &data,
 		}
-		if err := json.NewEncoder(w).Encode(response); err != nil {
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
 			t.Fatal(err)
 		}
 	}))
@@ -49,14 +48,13 @@ func TestFileClient_GetFileMetadata(t *testing.T) {
 			t.Errorf("Expected to request '/v1/files/test-cuid', got %s", r.URL.Path)
 		}
 		w.WriteHeader(http.StatusOK)
-		response := struct {
-			Success bool        `json:"success"`
-			Data    models.File `json:"data"`
-		}{
+		fileData := models.File{ID: "test-cuid"}
+		var data interface{} = fileData
+		apiResponse := models.APIResponse{
 			Success: true,
-			Data:    models.File{ID: "test-cuid"},
+			Data:    &data,
 		}
-		if err := json.NewEncoder(w).Encode(response); err != nil {
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
 			t.Fatal(err)
 		}
 	}))
@@ -105,14 +103,13 @@ func TestFileClient_ListUserFiles(t *testing.T) {
 			t.Errorf("Expected to request '/v1/files', got %s", r.URL.Path)
 		}
 		w.WriteHeader(http.StatusOK)
-		response := struct {
-			Success bool          `json:"success"`
-			Data    []models.File `json:"data"`
-		}{
+		filesData := []models.File{{ID: "file1"}, {ID: "file2"}}
+		var data interface{} = filesData
+		apiResponse := models.APIResponse{
 			Success: true,
-			Data:    []models.File{{ID: "file1"}, {ID: "file2"}},
+			Data:    &data,
 		}
-		if err := json.NewEncoder(w).Encode(response); err != nil {
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
 			t.Fatal(err)
 		}
 	}))
@@ -140,6 +137,14 @@ func TestFileClient_DeleteFile(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
+		apiResponse := models.APIResponse{
+			Success: true,
+			Message: "File deleted successfully",
+			Data:    nil,
+		}
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -161,7 +166,13 @@ func TestFileClient_RenameFile(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte(`{"success": true, "data": {"id": "test-cuid", "filename": "new-name.txt"}}`)); err != nil {
+		fileData := models.File{ID: "test-cuid", Filename: "new-name.txt"}
+		var data interface{} = fileData
+		apiResponse := models.APIResponse{
+			Success: true,
+			Data:    &data,
+		}
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
 			t.Fatal(err)
 		}
 	}))

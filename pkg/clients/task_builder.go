@@ -46,7 +46,7 @@ func (b *TaskBuilder) Execute(ctx context.Context) (*models.Task, error) {
 
 	req := models.CreateTaskRequest{
 		FileID: b.fileID,
-		Config: b.config,
+		Config: &b.config,
 	}
 
 	return b.client.CreateTask(ctx, req)

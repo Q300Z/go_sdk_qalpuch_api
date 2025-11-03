@@ -20,15 +20,17 @@ func TestAuthClient_Login(t *testing.T) {
 			t.Errorf("Expected POST request, got %s", r.Method)
 		}
 		w.WriteHeader(http.StatusOK)
-		response := models.LoginResponse{
+		loginData := models.LoginResponseData{
+			Token:        "fake_jwt_token",
+			RefreshToken: "fake_refresh_token",
+		}
+		var data interface{} = loginData
+		apiResponse := models.APIResponse{
 			Success: true,
 			Message: "Login successful",
-			Data: models.LoginResponseData{
-				Token:        "fake_jwt_token",
-				RefreshToken: "fake_refresh_token",
-			},
+			Data:    &data,
 		}
-		if err := json.NewEncoder(w).Encode(response); err != nil {
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
 			t.Fatal(err)
 		}
 	}))
@@ -64,15 +66,17 @@ func TestAuthClient_Register(t *testing.T) {
 			t.Errorf("Expected POST request, got %s", r.Method)
 		}
 		w.WriteHeader(http.StatusCreated)
-		response := models.LoginResponse{
+		registerData := models.LoginResponseData{
+			Token: "fake_jwt_token",
+			User:  models.User{ID: 1, Name: "testuser"},
+		}
+		var data interface{} = registerData
+		apiResponse := models.APIResponse{
 			Success: true,
 			Message: "User registered successfully",
-			Data: models.LoginResponseData{
-				Token: "fake_jwt_token",
-				User:  models.User{ID: 1, Name: "testuser"},
-			},
+			Data:    &data,
 		}
-		if err := json.NewEncoder(w).Encode(response); err != nil {
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
 			t.Fatal(err)
 		}
 	}))
@@ -119,6 +123,14 @@ func TestAuthClient_Logout(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
+		apiResponse := models.APIResponse{
+			Success: true,
+			Message: "Logged out successfully",
+			Data:    nil,
+		}
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -149,6 +161,14 @@ func TestAuthClient_ChangePassword(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
+		apiResponse := models.APIResponse{
+			Success: true,
+			Message: "Password changed successfully",
+			Data:    nil,
+		}
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 
@@ -183,20 +203,16 @@ func TestAuthClient_RefreshToken(t *testing.T) {
 
 		w.WriteHeader(http.StatusOK)
 
-		response := models.RefreshResponse{
-
-			Success: true,
-
-			Data: models.RefreshResponseData{
-
-				Token: "new_access_token",
-			},
+		refreshData := models.RefreshResponseData{
+			Token: "new_access_token",
 		}
-
-		if err := json.NewEncoder(w).Encode(response); err != nil {
-
+		var data interface{} = refreshData
+		apiResponse := models.APIResponse{
+			Success: true,
+			Data:    &data,
+		}
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
 			t.Fatal(err)
-
 		}
 
 	}))

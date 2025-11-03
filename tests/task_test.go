@@ -26,14 +26,13 @@ func TestTaskClient_GetUserTasks(t *testing.T) {
 			t.Errorf("Expected to request '/v1/tasks', got %s", r.URL.Path)
 		}
 		w.WriteHeader(http.StatusOK)
-		response := struct {
-			Success bool          `json:"success"`
-			Data    []models.Task `json:"data"`
-		}{
+		tasksData := []models.Task{{ID: "task1"}, {ID: "task2"}}
+		var data interface{} = tasksData
+		apiResponse := models.APIResponse{
 			Success: true,
-			Data:    []models.Task{{ID: "task1"}, {ID: "task2"}},
+			Data:    &data,
 		}
-		if err := json.NewEncoder(w).Encode(response); err != nil {
+		if err := json.NewEncoder(w).Encode(apiResponse); err != nil {
 			t.Fatal(err)
 		}
 	}))
@@ -75,10 +74,18 @@ func TestTaskClient_CreateTask(t *testing.T) {
 
 	mainClient := clients.NewClient(server.URL+"/v1", "test_token")
 
-	req := models.CreateTaskRequest{FileID: "file-id", Config: "{}"}
+	emptyConfig := map[string]interface{}{}
+
+	var configInterface interface{} = emptyConfig
+
+	req := models.CreateTaskRequest{FileID: "file-id", Config: &configInterface}
+
 	task, err := mainClient.Tasks.CreateTask(context.Background(), req)
+
 	if err != nil {
+
 		t.Fatalf("CreateTask failed: %v", err)
+
 	}
 
 	if task.ID != "new-task-id" {
@@ -273,7 +280,8 @@ func TestTaskClient_CreateTask_FromPredefined_Success(t *testing.T) {
 				ID:     predefinedTaskID,
 				Config: `{"type":"video","codec":"h264"}`,
 			}
-			if err := json.NewEncoder(w).Encode(models.APIResponse{Success: true, Data: response}); err != nil {
+			var data interface{} = response
+			if err := json.NewEncoder(w).Encode(models.APIResponse{Success: true, Data: &data}); err != nil {
 				t.Fatal(err)
 			}
 			return
@@ -303,7 +311,8 @@ func TestTaskClient_CreateTask_FromPredefined_Success(t *testing.T) {
 
 		w.WriteHeader(http.StatusCreated)
 		response := models.Task{ID: "new-task-id"}
-		if err := json.NewEncoder(w).Encode(models.APIResponse{Success: true, Data: response}); err != nil {
+		var data interface{} = response
+		if err := json.NewEncoder(w).Encode(models.APIResponse{Success: true, Data: &data}); err != nil {
 			t.Fatal(err)
 		}
 	})

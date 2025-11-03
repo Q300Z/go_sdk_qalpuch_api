@@ -25,26 +25,22 @@ func NewTaskClient(client *Client) services.TaskService {
 
 // GetUserTasks retrieves tasks for the authenticated user.
 func (c *TaskClient) GetUserTasks(ctx context.Context) ([]models.Task, error) {
-	var resp struct {
-		Data []models.Task `json:"data"`
-	}
-	err := c.client.Get(ctx, "/tasks", &resp)
+	tasks := []models.Task{}
+	err := c.client.Get(ctx, "/tasks", &tasks)
 	if err != nil {
 		return nil, err
 	}
-	return resp.Data, nil
+	return tasks, nil
 }
 
 // CreateTask creates a new task.
 func (c *TaskClient) CreateTask(ctx context.Context, req models.CreateTaskRequest) (*models.Task, error) {
-	var resp struct {
-		Data models.Task `json:"data"`
-	}
-	err := c.client.Post(ctx, "/tasks", req, &resp)
+	task := &models.Task{}
+	err := c.client.Post(ctx, "/tasks", req, task)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.Data, nil
+	return task, nil
 }
 
 // DeleteTask deletes a task.
@@ -54,14 +50,12 @@ func (c *TaskClient) DeleteTask(ctx context.Context, cuid string) error {
 
 // GetPendingTask retrieves a pending task for a worker.
 func (c *TaskClient) GetPendingTask(ctx context.Context) (*models.Task, error) {
-	var resp struct {
-		Data models.Task `json:"data"`
-	}
-	err := c.client.Get(ctx, "/tasks/pending", &resp)
+	task := &models.Task{}
+	err := c.client.Get(ctx, "/tasks/pending", task)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.Data, nil
+	return task, nil
 }
 
 // UpdateTaskStatus updates the status of a task.
@@ -103,12 +97,13 @@ func (c *TaskClient) UploadTaskResult(ctx context.Context, cuid string, filename
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 400 {
-		var apiErr models.APIErrorResponse
-		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
-			return fmt.Errorf("API error with status %d: %s", resp.StatusCode, resp.Status)
-		}
-		return &errors.APIError{StatusCode: resp.StatusCode, Message: apiErr.Message}
+	var apiResponse models.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return fmt.Errorf("failed to decode API response: %w", err)
+	}
+
+	if !apiResponse.Success {
+		return &errors.APIError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("API error: %s", *apiResponse.Error)}
 	}
 
 	return nil

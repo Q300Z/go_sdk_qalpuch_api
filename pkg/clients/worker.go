@@ -20,39 +20,33 @@ func NewWorkerClient(client *Client) services.WorkerService {
 
 // GetWorkers retrieves all workers.
 func (c *WorkerClient) GetWorkers(ctx context.Context) ([]models.Worker, error) {
-	var resp struct {
-		Data []models.Worker `json:"data"`
-	}
-	err := c.client.Get(ctx, "/worker", &resp)
+	workers := []models.Worker{}
+	err := c.client.Get(ctx, "/worker", &workers)
 	if err != nil {
 		return nil, err
 	}
-	return resp.Data, nil
+	return workers, nil
 }
 
 // GetWorker retrieves a worker by ID.
 func (c *WorkerClient) GetWorker(ctx context.Context, cuid string) (*models.Worker, error) {
-	var resp struct {
-		Data models.Worker `json:"data"`
-	}
-	err := c.client.Get(ctx, fmt.Sprintf("/worker/%s", cuid), &resp)
+	worker := &models.Worker{}
+	err := c.client.Get(ctx, fmt.Sprintf("/worker/%s", cuid), worker)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.Data, nil
+	return worker, nil
 }
 
 // CreateWorker creates a new worker.
 func (c *WorkerClient) CreateWorker(ctx context.Context, name string, capabilities []string) (*models.Worker, error) {
 	req := models.CreateWorkerRequest{Name: name, Capabilities: capabilities}
-	var resp struct {
-		Data models.Worker `json:"data"`
-	}
-	err := c.client.Post(ctx, "/worker", req, &resp)
+	worker := &models.Worker{}
+	err := c.client.Post(ctx, "/worker", req, worker)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.Data, nil
+	return worker, nil
 }
 
 // DeleteWorker deletes a worker.

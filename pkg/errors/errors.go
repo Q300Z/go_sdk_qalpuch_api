@@ -1,11 +1,8 @@
 package errors
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 )
 
 // APIError represents a detailed error returned by the QAlpuch API.
@@ -32,6 +29,3 @@ var (
 	ErrInternalServer = errors.New("internal server error")
 	ErrUnknown        = errors.New("an unknown API error occurred")
 )
-
-// NewAPIErrorFromResponse creates a new APIError from an HTTP response.
-// It attempts to parse the error details from the response body.

@@ -14,7 +14,7 @@ import (
 	"github.com/Q300Z/go_sdk_qalpuch_api/pkg/services"
 )
 
-// Client manages communication with the QAlpuch API.
+// Client manages communication with the Qalpuch API.
 type Client struct {
 	HTTPClient *http.Client
 	BaseURL    string
@@ -77,17 +77,41 @@ func (c *Client) Request(ctx context.Context, method, path string, reqBody, resp
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 400 {
-		var apiErr models.APIErrorResponse
-		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
-			return fmt.Errorf("API error with status %d for %s %s: %s", resp.StatusCode, method, url, resp.Status)
+	var apiResponse models.APIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		// If we can't decode into APIResponse, try to decode into APIErrorResponse for error handling
+		var apiErrResp models.APIErrorResponse
+		if err := json.NewDecoder(bytes.NewBufferString(resp.Status)).Decode(&apiErrResp); err == nil {
+			return &errors.APIError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("API error for %s %s: %s", method, url, apiErrResp.Message)}
 		}
-		return &errors.APIError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("API error for %s %s: %s", method, url, apiErr.Message)}
+		return fmt.Errorf("failed to decode API response for %s %s: %w", method, url, err)
 	}
 
-	if respBody != nil {
-		if err := json.NewDecoder(resp.Body).Decode(respBody); err != nil {
-			return fmt.Errorf("failed to decode response body for %s %s: %w", method, url, err)
+	if !apiResponse.Success {
+		var errMsg string
+		if apiResponse.Message != "" {
+			errMsg = apiResponse.Message
+		} else if apiResponse.Error != nil {
+			// Attempt to extract error message from the Error field if it's a string
+			if errStr, ok := (*apiResponse.Error).(string); ok {
+				errMsg = errStr
+			} else {
+				// Fallback if Error is not a string
+				errMsg = fmt.Sprintf("API error with status %d for %s %s", resp.StatusCode, method, url)
+			}
+		} else {
+			errMsg = fmt.Sprintf("API error with status %d for %s %s", resp.StatusCode, method, url)
+		}
+		return &errors.APIError{StatusCode: resp.StatusCode, Message: errMsg}
+	}
+
+	if respBody != nil && apiResponse.Data != nil {
+		dataBytes, err := json.Marshal(apiResponse.Data)
+		if err != nil {
+			return fmt.Errorf("failed to marshal API response data for %s %s: %w", method, url, err)
+		}
+		if err := json.Unmarshal(dataBytes, respBody); err != nil {
+			return fmt.Errorf("failed to unmarshal API response data for %s %s: %w", method, url, err)
 		}
 	}
 

@@ -20,38 +20,32 @@ func NewUserClient(client *Client) services.UserService {
 
 // GetUsers retrieves all users.
 func (c *UserClient) GetUsers(ctx context.Context) ([]models.User, error) {
-	var resp struct {
-		Data []models.User `json:"data"`
-	}
-	err := c.client.Get(ctx, "/users", &resp)
+	users := []models.User{}
+	err := c.client.Get(ctx, "/users", &users)
 	if err != nil {
 		return nil, err
 	}
-	return resp.Data, nil
+	return users, nil
 }
 
 // GetUser retrieves a user by ID.
 func (c *UserClient) GetUser(ctx context.Context, id int) (*models.User, error) {
-	var resp struct {
-		Data models.User `json:"data"`
-	}
-	err := c.client.Get(ctx, fmt.Sprintf("/users/%d", id), &resp)
+	user := &models.User{}
+	err := c.client.Get(ctx, fmt.Sprintf("/users/%d", id), user)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.Data, nil
+	return user, nil
 }
 
 // UpdateUser updates a user.
 func (c *UserClient) UpdateUser(ctx context.Context, id int, req models.UpdateUserRequest) (*models.User, error) {
-	var resp struct {
-		Data models.User `json:"data"`
-	}
-	err := c.client.Put(ctx, fmt.Sprintf("/users/%d", id), req, &resp)
+	user := &models.User{}
+	err := c.client.Put(ctx, fmt.Sprintf("/users/%d", id), req, user)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.Data, nil
+	return user, nil
 }
 
 // DeleteUser deletes a user by ID.
@@ -66,24 +60,20 @@ func (c *UserClient) DeleteCurrentUser(ctx context.Context) error {
 
 // CreateUser creates a new user.
 func (c *UserClient) CreateUser(ctx context.Context, req models.CreateUserRequest) (*models.User, error) {
-	var resp struct {
-		Data models.User `json:"data"`
-	}
-	err := c.client.Post(ctx, "/users", req, &resp)
+	user := &models.User{}
+	err := c.client.Post(ctx, "/users", req, user)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.Data, nil
+	return user, nil
 }
 
 // SearchUsers searches for users by query.
 func (c *UserClient) SearchUsers(ctx context.Context, query string) ([]models.User, error) {
-	var resp struct {
-		Data []models.User `json:"data"`
-	}
-	err := c.client.Get(ctx, fmt.Sprintf("/users/search?q=%s", query), &resp)
+	users := []models.User{}
+	err := c.client.Get(ctx, fmt.Sprintf("/users/search?q=%s", query), &users)
 	if err != nil {
 		return nil, err
 	}
-	return resp.Data, nil
+	return users, nil
 }
